@@ -26,7 +26,7 @@ public class AuthService {
     public void register(RegisterRequest request) {
         // Check if passwords match
         if(!request.getPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("PAsswords do not match");
+            throw new RuntimeException("Passwords do not match");
         }
 
         // Check if email or username already exists
@@ -78,7 +78,8 @@ public class AuthService {
 
         rateLimitService.resetAttempts(ipAddress);
 
-        String token = jwtUtils.generateToken(user.getUsername());
+        // ✅ ISPRAVKA: Koristi email umesto username
+        String token = jwtUtils.generateToken(user.getEmail());
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail());
     }
 
