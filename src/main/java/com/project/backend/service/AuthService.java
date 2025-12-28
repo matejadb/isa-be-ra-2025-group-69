@@ -78,7 +78,6 @@ public class AuthService {
 
         rateLimitService.resetAttempts(ipAddress);
 
-        // ✅ ISPRAVKA: Koristi email umesto username
         String token = jwtUtils.generateToken(user.getEmail());
         return new AuthResponse(token, user.getId(), user.getUsername(), user.getEmail());
     }
