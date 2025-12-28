@@ -1,7 +1,9 @@
 package com.project.backend.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -28,6 +30,7 @@ public class RegisterRequest {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotBlank(message = "Address is required")
-    private String address;
+    @NotNull(message = "Address is required")
+    @Valid
+    private AddressDTO address;
 }

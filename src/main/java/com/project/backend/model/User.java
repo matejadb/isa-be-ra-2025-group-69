@@ -38,14 +38,17 @@ public class User {
     @Size(min = 8, message = "Password must be at least 6 characters")
     private String password;
 
+    @Column(name = "first_name")
     @NotBlank(message = "First name is required")
     private String firstName;
 
+    @Column(name = "last_name")
     @NotBlank(message = "Last name is required")
     private String lastName;
 
-    @NotBlank(message = "Address is required")
-    private String address;
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "address_id", referencedColumnName = "id")
+    private Address address;
 
     @Column(nullable = false)
     private boolean activated = false;
@@ -54,5 +57,6 @@ public class User {
     private String activationToken;
 
     @CreationTimestamp
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }

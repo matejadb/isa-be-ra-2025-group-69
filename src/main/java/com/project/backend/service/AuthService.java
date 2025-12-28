@@ -4,6 +4,7 @@ import com.project.backend.dto.AuthResponse;
 import com.project.backend.dto.LoginRequest;
 import com.project.backend.dto.RegisterRequest;
 import com.project.backend.model.User;
+import com.project.backend.model.Address;
 import com.project.backend.repository.UserRepository;
 import com.project.backend.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,13 @@ public class AuthService {
             throw new RuntimeException("Username already in use");
         }
 
+        // Create address string
+        Address address = new Address();
+        address.setStreet(request.getAddress().getStreet());
+        address.setCity(request.getAddress().getCity());
+        address.setPostalCode(request.getAddress().getPostalCode());
+        address.setCountry(request.getAddress().getCountry());
+
         // Create new user
         User user = new User();
         user.setEmail(request.getEmail());
@@ -45,7 +53,7 @@ public class AuthService {
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setAddress(request.getAddress());
+        user.setAddress(address);
         user.setActivated(false);
         user.setActivationToken(UUID.randomUUID().toString());
 
