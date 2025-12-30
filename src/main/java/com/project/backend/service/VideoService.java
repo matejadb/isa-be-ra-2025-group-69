@@ -120,4 +120,16 @@ public class VideoService {
         response.setLikeCount(video.getLikeCount());
         return response;
     }
+
+    public VideoResponse getVideoById(Long id) {
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+        return mapToResponse(video);
+    }
+
+    public String getVideoPath(Long id) {
+        Video video = videoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+        return video.getVideoPath();
+    }
 }
