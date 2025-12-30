@@ -33,7 +33,7 @@ public class Video {
     @Column(nullable = false)
     private String videoPath;
 
-    @column(nullable = false)
+    @Column(nullable = false)
     private String thumbnailPath;
 
     @Column(nullable = false)
