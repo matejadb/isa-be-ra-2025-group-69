@@ -32,6 +32,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/videos").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/videos/*/like").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/videos/*/comments").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

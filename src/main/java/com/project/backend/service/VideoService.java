@@ -25,6 +25,8 @@ public class VideoService {
     private final VideoRepository videoRepository;
     private final TagRepository tagRepository;
     private final FileStorageService fileStorageService;
+    private final LikeService likeService;
+    private final CommentService commentService;
 
     private static final long MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB
 
@@ -87,10 +89,10 @@ public class VideoService {
         }
     }
 
-    public List<VideoResponse> getAllVideos() {
+    public List<VideoResponse> getAllVideos(Long currentUserId) {
         return videoRepository.findAllByOrderByCreatedAtDesc()
                 .stream()
-                .map(this::mapToResponse)
+                .map(video -> mapToResponse(video, currentUserId))
                 .collect(Collectors.toList());
     }
 
@@ -102,7 +104,7 @@ public class VideoService {
         return video.getThumbnailPath();
     }
 
-    private VideoResponse mapToResponse(Video video) {
+    private VideoResponse mapToResponse(Video video, Long currentUserId) {
         VideoResponse response = new VideoResponse();
         response.setId(video.getId());
         response.setTitle(video.getTitle());
@@ -118,13 +120,20 @@ public class VideoService {
         response.setUsername(video.getUser().getUsername());
         response.setViewCount(video.getViewCount());
         response.setLikeCount(video.getLikeCount());
+        response.setCommentCount(commentService.getCommentCount(video.getId()));
+
+        // Proveri da li je trenutni korisnik lajkovao video
+        if (currentUserId != null) {
+            response.setIsLikedByCurrentUser(likeService.isLikedByUser(video.getId(), currentUserId));
+        }
+
         return response;
     }
 
-    public VideoResponse getVideoById(Long id) {
+    public VideoResponse getVideoById(Long id, Long currentUserId) {
         Video video = videoRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Video not found"));
-        return mapToResponse(video);
+        return mapToResponse(video, currentUserId);
     }
 
     public String getVideoPath(Long id) {
@@ -132,4 +141,6 @@ public class VideoService {
                 .orElseThrow(() -> new RuntimeException("Video not found"));
         return video.getVideoPath();
     }
+
+
 }
