@@ -83,7 +83,7 @@ public class VideoService {
             // Save video to database
             Video savedVideo = videoRepository.save(video);
 
-            return mapToResponse(savedVideo);
+            return mapToResponse(savedVideo, user.getId());
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload video: " + e.getMessage());
         }
