@@ -23,4 +23,5 @@ public class VideoResponse {
     private String username;
     private Integer viewCount;
     private Integer likeCount;
+    private Boolean isLikedByCurrentUser; // null if user isn't logged in
 }
