@@ -26,7 +26,6 @@ public class VideoService {
     private final TagRepository tagRepository;
     private final FileStorageService fileStorageService;
     private final LikeService likeService;
-    private final CommentService commentService;
 
     private static final long MAX_VIDEO_SIZE = 200 * 1024 * 1024; // 200 MB
 
@@ -120,7 +119,6 @@ public class VideoService {
         response.setUsername(video.getUser().getUsername());
         response.setViewCount(video.getViewCount());
         response.setLikeCount(video.getLikeCount());
-        response.setCommentCount(commentService.getCommentCount(video.getId()));
 
         // Proveri da li je trenutni korisnik lajkovao video
         if (currentUserId != null) {

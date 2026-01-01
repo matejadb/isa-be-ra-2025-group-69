@@ -1,19 +1,14 @@
 package com.project.backend.controller;
 
-import com.project.backend.dto.CommentRequest;
-import com.project.backend.dto.CommentResponse;
 import com.project.backend.dto.VideoResponse;
 import com.project.backend.dto.VideoUploadRequest;
 import com.project.backend.model.User;
-import com.project.backend.service.CommentService;
 import com.project.backend.service.LikeService;
 import com.project.backend.service.VideoService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +29,6 @@ public class VideoController {
 
     private final VideoService videoService;
     private final LikeService likeService;
-    private final CommentService commentService;
     private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -144,31 +138,5 @@ public class VideoController {
         }
         boolean isLiked = likeService.isLikedByUser(id, user.getId());
         return ResponseEntity.ok(Map.of("liked", isLiked));
-    }
-
-    // ====== COMMENT ENDPOINTS ======
-
-    @PostMapping("/{id}/comments")
-    public ResponseEntity<?> addComment(
-            @PathVariable Long id,
-            @Valid @RequestBody CommentRequest request,
-            @AuthenticationPrincipal User user
-    ) {
-        try {
-            CommentResponse comment = commentService.addComment(id, request, user);
-            return ResponseEntity.ok(comment);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
-    }
-
-    @GetMapping("/{id}/comments")
-    public ResponseEntity<Page<CommentResponse>> getComments(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
-        Page<CommentResponse> comments = commentService.getCommentsByVideoId(id, page, size);
-        return ResponseEntity.ok(comments);
     }
 }
