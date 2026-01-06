@@ -10,6 +10,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.UUID;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+
+
+
 
 @Service
 public class FileStorageService {
@@ -40,6 +45,7 @@ public class FileStorageService {
         }
     }
 
+    @CacheEvict(value = "thumbnails", key = "#filePath")
     public void deleteFile(String filePath) {
         try {
             Path path = Paths.get(uploadDir, filePath);
@@ -47,5 +53,11 @@ public class FileStorageService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete file: " + e.getMessage());
         }
+    }
+
+    @Cacheable(value = "thumbnails", key = "#filePath")
+    public byte[] readThumbnail(String filePath) throws IOException {
+        Path path = Paths.get(uploadDir, filePath);
+        return Files.readAllBytes(path);
     }
 }
