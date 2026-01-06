@@ -20,7 +20,7 @@ public class EmailService {
         message.setSubject("Account Activation - Jutjubic");
         message.setText("Welcome to Jutjubic!\n\n" +
                 "Click the link below to activate your account:\n" +
-                appUrl + "activate?token=" + activationToken + "\n\n" +
+                appUrl + "/activate?token=" + activationToken + "\n\n" +
                 "Link will expire in 24 hours.\n\n" +
                 "If you did not sign up for this account, please ignore this email.\n\n" +
                 "Best regards,\n" +
