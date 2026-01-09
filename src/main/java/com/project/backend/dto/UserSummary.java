@@ -24,4 +24,7 @@ public class UserSummary {
 
     @Schema(description = "Last name")
     private String lastName;
+
+    @Schema(description = "Profile picture URL")
+    private String profilePictureUrl;
 }

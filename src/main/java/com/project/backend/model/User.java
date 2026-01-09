@@ -48,6 +48,9 @@ public class User {
     @NotBlank(message = "Last name is required")
     private String lastName;
 
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
+
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id", referencedColumnName = "id")
     private Address address;

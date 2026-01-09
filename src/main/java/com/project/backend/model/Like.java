@@ -1,21 +1,22 @@
-package com.project.backend.model;
+package com. project.backend.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
+import lombok.*;
+import org.hibernate.annotations. CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name ="likes", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "video_id"})
+@Table(name = "likes", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "video_id"}),
+        @UniqueConstraint(columnNames = {"user_id", "post_id"})
 })
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Like {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -25,10 +26,14 @@ public class Like {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "video_id", nullable = false)
+    @JoinColumn(name = "video_id")
     private Video video;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "post_id")
+    private Post post;  // ← DODAJ OVO
+
     @CreationTimestamp
-    @Column(nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 }

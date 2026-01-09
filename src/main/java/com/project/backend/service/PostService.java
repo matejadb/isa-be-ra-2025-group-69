@@ -1,6 +1,6 @@
 package com.project.backend.service;
 
-import com.project.backend. dto.PostResponse;
+import com.project.backend.dto.PostResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
