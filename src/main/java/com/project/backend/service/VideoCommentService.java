@@ -2,7 +2,8 @@ package com.project.backend.service;
 
 import com.project.backend.dto.CreateVideoCommentRequest;
 import com.project.backend.dto.VideoCommentDTO;
-import com. project.backend.dto.VideoCommentPageResponse;
+import com.project.backend.dto. VideoCommentPageResponse;
+import com.project.backend.exception. AccessDeniedException;
 import com. project.backend.exception.ResourceNotFoundException;
 import com.project.backend.model.User;
 import com.project.backend.model.Video;
@@ -28,9 +29,10 @@ public class VideoCommentService {
     private final VideoCommentRepository videoCommentRepository;
     private final VideoRepository videoRepository;
     private final UserRepository userRepository;
+    private final RateLimitService rateLimitService;  // ← DODATO
 
     /**
-     * Kreiranje komentara
+     * Kreiranje komentara (sa rate limiting - 60 komentara/sat)
      */
     @Transactional
     @CacheEvict(value = "videoComments", key = "#videoId")
@@ -39,21 +41,29 @@ public class VideoCommentService {
 
         // Pronađi korisnika
         User author = userRepository.findByUsername(username)
-                .orElseThrow(() -> ResourceNotFoundException.userNotFoundByUsername(username));  // ← IZMENA 1
+                .orElseThrow(() -> ResourceNotFoundException.userNotFoundByUsername(username));
+
+        // ✅ PROVERI RATE LIMIT (60 komentara/sat)
+        rateLimitService.checkCommentRateLimit(author.getId());
 
         // Pronađi video
         Video video = videoRepository.findById(videoId)
-                .orElseThrow(() -> ResourceNotFoundException.videoNotFound(videoId));  // ← IZMENA 2
+                .orElseThrow(() -> ResourceNotFoundException.videoNotFound(videoId));
 
         // Kreiraj komentar
         VideoComment comment = VideoComment.builder()
-                .content(request. getContent())
+                .content(request.getContent())
                 .video(video)
                 .author(author)
                 .build();
 
         VideoComment savedComment = videoCommentRepository.save(comment);
-        log.info("Video comment {} created successfully", savedComment.getId());
+
+        // ✅ ZABELEZI KOMENTAR (za rate limiting)
+        rateLimitService.recordComment(author.getId());
+
+        log.info("Video comment {} created successfully for video {} by user {}",
+                savedComment.getId(), videoId, username);
 
         return mapToDTO(savedComment);
     }
@@ -68,12 +78,12 @@ public class VideoCommentService {
 
         // Proveri da video postoji
         if (!videoRepository.existsById(videoId)) {
-            throw ResourceNotFoundException.videoNotFound(videoId);  // ← IZMENA 3
+            throw ResourceNotFoundException.videoNotFound(videoId);
         }
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest. of(page, size);
         Page<VideoComment> commentPage = videoCommentRepository
-                . findByVideoIdOrderByCreatedAtDesc(videoId, pageable);
+                .findByVideoIdOrderByCreatedAtDesc(videoId, pageable);
 
         return VideoCommentPageResponse.builder()
                 .content(commentPage.getContent().stream().map(this::mapToDTO).toList())
@@ -89,26 +99,37 @@ public class VideoCommentService {
     /**
      * Broj komentara za video
      */
+    @Transactional(readOnly = true)
     public long getCommentCount(Long videoId) {
-        return videoCommentRepository.countByVideoId(videoId);
+        log.debug("Getting comment count for video {}", videoId);
+
+        // Proveri da video postoji
+        if (!videoRepository.existsById(videoId)) {
+            throw ResourceNotFoundException.videoNotFound(videoId);
+        }
+
+        return videoCommentRepository. countByVideoId(videoId);
     }
 
     /**
-     * Brisanje komentara
+     * Brisanje komentara (samo autor može obrisati svoj komentar)
      */
     @Transactional
     @CacheEvict(value = "videoComments", allEntries = true)
     public void deleteComment(Long commentId, String username) {
-        VideoComment comment = videoCommentRepository.findById(commentId)
-                .orElseThrow(() -> ResourceNotFoundException.videoCommentNotFound(commentId));  // ← IZMENA 4
+        log.info("Deleting comment {} by user {}", commentId, username);
 
-        // Proveri da je autor
+        // Pronađi komentar
+        VideoComment comment = videoCommentRepository.findById(commentId)
+                .orElseThrow(() -> ResourceNotFoundException. videoCommentNotFound(commentId));
+
+        // ✅ PROVERI DA JE AUTOR (zamenjeno SecurityException sa AccessDeniedException)
         if (!comment.getAuthor().getUsername().equals(username)) {
-            throw new SecurityException("You can only delete your own comments");
+            throw AccessDeniedException.deleteOwnCommentOnly();
         }
 
         videoCommentRepository.delete(comment);
-        log.info("Video comment {} deleted", commentId);
+        log.info("Video comment {} deleted successfully", commentId);
     }
 
     /**
@@ -116,7 +137,7 @@ public class VideoCommentService {
      */
     private VideoCommentDTO mapToDTO(VideoComment comment) {
         return VideoCommentDTO.builder()
-                .id(comment.getId())
+                .id(comment. getId())
                 .content(comment.getContent())
                 .videoId(comment.getVideo().getId())
                 .author(VideoCommentDTO.AuthorDTO. builder()
