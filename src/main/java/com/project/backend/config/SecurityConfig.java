@@ -31,19 +31,35 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(authenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints - accessible to unauthenticated users
+                        // Public endpoints - Authentication
                         .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public endpoints - Swagger/OpenAPI Documentation
+                        . requestMatchers("/swagger-ui/**").permitAll()
+                        . requestMatchers("/swagger-ui. html").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-resources/**").permitAll()
+                        .requestMatchers("/webjars/**").permitAll()
+
+                        // Public endpoints - Read-only access
                         .requestMatchers(HttpMethod.GET, "/api/posts/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/users/{id}/profile").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        . requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/videos/{id}/comments").permitAll()
 
-                        // Protected endpoints - require authentication
+                        // Protected endpoints - Create/Modify operations
                         .requestMatchers(HttpMethod.POST, "/api/posts/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/comments/**").authenticated()
                         .requestMatchers(HttpMethod.POST, "/api/likes/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/videos/{id}/comments").authenticated()
+                        . requestMatchers(HttpMethod.DELETE, "/api/videos/{id}/comments/**").authenticated()
+
+                        // Protected endpoints - User profile
                         .requestMatchers("/api/users/me/**").authenticated()
 
-                        .anyRequest().authenticated()
+                        // All other requests require authentication
+                        . anyRequest().authenticated()
                 );
 
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
