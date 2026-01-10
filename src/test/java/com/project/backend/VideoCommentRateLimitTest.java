@@ -45,10 +45,14 @@ class VideoCommentRateLimitTest {
     void setUp() {
         rateLimitService.clearAllCommentRateLimits();
 
+        long timestamp = System.currentTimeMillis() % 100000;
+        String testUsername = "testuser" + timestamp;
+        String testEmail = "test" + timestamp + "@example.com";
+
         testUser = new User();
-        testUser.setUsername("ratelimit_test_user_" + System.currentTimeMillis());
-        testUser.setEmail("ratelimit" + System.currentTimeMillis() + "@test.com");
-        testUser.setPassword("password123");
+        testUser.setUsername(testUsername);
+        testUser.setEmail(testEmail);
+        testUser.setPassword("Password123!");
         testUser.setFirstName("Rate");
         testUser.setLastName("Limit");
         testUser = userRepository.save(testUser);
@@ -56,11 +60,23 @@ class VideoCommentRateLimitTest {
         testVideo1 = new Video();
         testVideo1.setTitle("Test Video 1");
         testVideo1.setDescription("Description 1");
+        testVideo1.setUser(testUser);
+        testVideo1.setVideoPath("/test/video1.mp4");
+        testVideo1.setThumbnailPath("/test/thumbnail1.jpg");
+        testVideo1.setFileSize(1024L);
+        testVideo1.setLikeCount(0);
+        testVideo1.setViewCount(0);
         testVideo1 = videoRepository.save(testVideo1);
 
         testVideo2 = new Video();
         testVideo2.setTitle("Test Video 2");
         testVideo2.setDescription("Description 2");
+        testVideo2.setUser(testUser);
+        testVideo2.setVideoPath("/test/video2.mp4");
+        testVideo2.setThumbnailPath("/test/thumbnail2.jpg");
+        testVideo2.setFileSize(2048L);
+        testVideo2.setLikeCount(0);
+        testVideo2.setViewCount(0);
         testVideo2 = videoRepository.save(testVideo2);
     }
 
