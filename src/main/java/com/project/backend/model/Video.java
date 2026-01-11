@@ -1,5 +1,6 @@
 package com.project.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -11,8 +12,8 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util. List;
+import java.util. Set;
 
 @Entity
 @Table(name = "videos")
@@ -48,8 +49,9 @@ public class Video {
     @Column
     private String location;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType. LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore  // ← DODATO!  Sprečava LazyInitializationException
     private User user;
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
@@ -58,9 +60,15 @@ public class Video {
             joinColumns = @JoinColumn(name = "video_id"),
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
+    @JsonIgnore  // ← DODATO!  Sprečava LazyInitializationException
     private Set<Tag> tags = new HashSet<>();
 
+    @OneToMany(mappedBy = "video", cascade = CascadeType. ALL, orphanRemoval = true)
+    @JsonIgnore  // ← DODATO!  Sprečava LazyInitializationException
+    private List<Comment> comments = new ArrayList<>();  // ← DODATO!  Nedostajalo!
+
     @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  // ← DODATO!   Sprečava LazyInitializationException
     private List<Like> likes = new ArrayList<>();
 
     @Column(nullable = false)

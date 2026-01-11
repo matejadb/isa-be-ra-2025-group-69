@@ -9,15 +9,11 @@ import java. util.Optional;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
 
-    // ========== VIDEO LIKES (Postojeće) ==========
+    // ========== VIDEO LIKES ==========
     Optional<Like> findByUserIdAndVideoId(Long userId, Long videoId);
     boolean existsByUserIdAndVideoId(Long userId, Long videoId);
     void deleteByUserIdAndVideoId(Long userId, Long videoId);
     long countByVideoId(Long videoId);
 
-    // ========== POST LIKES (Dodaj ovo!) ==========
-    boolean existsByPostIdAndUserId(Long postId, Long userId);
-    Optional<Like> findByUserIdAndPostId(Long userId, Long postId);
-    void deleteByUserIdAndPostId(Long userId, Long postId);
-    long countByPostId(Long postId);
+    // Post metode su OBRISANE jer Post.java ne postoji!
 }

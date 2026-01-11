@@ -1,5 +1,6 @@
 package com.project.backend.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -8,11 +9,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.engine.internal.ImmutableEntityEntry;
+import org.hibernate. engine.internal.ImmutableEntityEntry;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.time.LocalDateTime;
+import java.util. ArrayList;
+import java.util. List;
+import java.time. LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -66,9 +67,11 @@ public class User {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  //
     private List<Video> videos = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore  //
     private List<Like> likes = new ArrayList<>();
 
 }
