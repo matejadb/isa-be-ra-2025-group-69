@@ -1,6 +1,7 @@
 package com.project.backend.controller;
 
 import com.project.backend.dto.VideoResponse;
+import com.project.backend.dto.VideoStreamResponse;
 import com.project.backend.dto.VideoUploadRequest;
 import com.project.backend.model.User;
 import com.project.backend.service.LikeService;
@@ -18,12 +19,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -141,34 +146,122 @@ public class VideoController {
         }
     }
 
+    @GetMapping("/{id}/stream-info")
+    @Operation(
+            summary = "Get video stream synchronization info",
+            description = "Get information about video streaming including current playback offset for scheduled videos. All users watching a scheduled video will get the same offset, ensuring synchronized viewing."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Stream info retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = VideoStreamResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Video not found")
+    })
+    public ResponseEntity<?> getStreamInfo(
+            @Parameter(description = "Video ID", required = true) @PathVariable Long id
+    ) {
+        try {
+            VideoStreamResponse streamInfo = videoService.getStreamInfo(id);
+            return ResponseEntity.ok(streamInfo);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/stream")
     @Operation(
             summary = "Stream video",
-            description = "Stream video content in MP4 format"
+            description = "Stream video content in MP4 format. Supports HTTP Range requests for seeking. For scheduled videos, checks availability before streaming."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Video streaming",
                     content = @Content(mediaType = "video/mp4")),
+            @ApiResponse(responseCode = "206", description = "Partial content (range request)",
+                    content = @Content(mediaType = "video/mp4")),
+            @ApiResponse(responseCode = "403", description = "Video not yet available (scheduled)"),
             @ApiResponse(responseCode = "404", description = "Video file not found")
     })
-    public ResponseEntity<Resource> streamVideo(
-            @Parameter(description = "Video ID", required = true) @PathVariable Long id
+    public ResponseEntity<?> streamVideo(
+            @Parameter(description = "Video ID", required = true) @PathVariable Long id,
+            @RequestHeader(value = "Range", required = false) String rangeHeader
     ) {
         try {
+            // Check if video is available (for scheduled videos)
+            VideoStreamResponse streamInfo = videoService.getStreamInfo(id);
+            if (!streamInfo.getIsAvailable()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of(
+                                "error", "Video not yet available",
+                                "message", streamInfo.getMessage(),
+                                "scheduledAt", streamInfo.getScheduledAt()
+                        ));
+            }
+
             String videoPath = videoService.getVideoPath(id);
             Path filePath = Paths.get("uploads").resolve(videoPath);
-            Resource resource = new UrlResource(filePath.toUri());
+            File videoFile = filePath.toFile();
 
-            if (resource.exists() && resource.isReadable()) {
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType("video/mp4"))
-                        .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                        .body(resource);
-            } else {
+            if (!videoFile.exists() || !videoFile.canRead()) {
                 return ResponseEntity.notFound().build();
             }
+
+            long fileSize = videoFile.length();
+
+            // Support Range requests for video seeking
+            if (rangeHeader != null && rangeHeader.startsWith("bytes=")) {
+                return handleRangeRequest(videoFile, rangeHeader, fileSize);
+            }
+
+            // Full video response
+            Resource resource = new UrlResource(filePath.toUri());
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("video/mp4"))
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(fileSize))
+                    .body(resource);
         } catch (Exception e) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error streaming video: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Handle HTTP Range requests for video seeking
+     */
+    private ResponseEntity<byte[]> handleRangeRequest(File videoFile, String rangeHeader, long fileSize) {
+        try {
+            // Parse range header (e.g., "bytes=0-1023")
+            String[] ranges = rangeHeader.replace("bytes=", "").split("-");
+            long start = Long.parseLong(ranges[0]);
+            long end = ranges.length > 1 && !ranges[1].isEmpty()
+                    ? Long.parseLong(ranges[1])
+                    : fileSize - 1;
+
+            // Validate range
+            if (start > end || start < 0 || end >= fileSize) {
+                return ResponseEntity.status(HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE)
+                        .header(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize)
+                        .build();
+            }
+
+            long contentLength = end - start + 1;
+            byte[] data = new byte[(int) contentLength];
+
+            // Read the requested byte range
+            try (RandomAccessFile raf = new RandomAccessFile(videoFile, "r")) {
+                raf.seek(start);
+                raf.readFully(data);
+            }
+
+            return ResponseEntity.status(HttpStatus.PARTIAL_CONTENT)
+                    .contentType(MediaType.parseMediaType("video/mp4"))
+                    .header(HttpHeaders.CONTENT_RANGE, "bytes " + start + "-" + end + "/" + fileSize)
+                    .header(HttpHeaders.ACCEPT_RANGES, "bytes")
+                    .header(HttpHeaders.CONTENT_LENGTH, String.valueOf(contentLength))
+                    .body(data);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

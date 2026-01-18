@@ -68,4 +68,10 @@ public class Video {
 
     @Column(nullable = false)
     private Integer likeCount = 0;
+
+    @Column
+    private LocalDateTime scheduledAt;
+
+    @Column
+    private Long durationInSeconds;
 }
