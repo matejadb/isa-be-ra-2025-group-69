@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -23,4 +24,7 @@ public class VideoUploadRequest {
 
     @Schema(description = "Geographic location (optional)", example = "Belgrade, Serbia")
     private String location;
+
+    @Schema(description = "Scheduled release date/time (optional). If set, video will only be available at this time.", example = "2026-01-20T08:00:00")
+    private LocalDateTime scheduledAt;
 }

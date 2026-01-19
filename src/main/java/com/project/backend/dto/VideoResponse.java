@@ -51,4 +51,16 @@ public class VideoResponse {
 
     @Schema(description = "Whether current user has liked this video (null if not authenticated)", example = "true")
     private Boolean isLikedByCurrentUser;
+
+    @Schema(description = "Scheduled release date/time (null if not scheduled)", example = "2026-01-20T08:00:00")
+    private LocalDateTime scheduledAt;
+
+    @Schema(description = "Video duration in seconds", example = "300")
+    private Long durationInSeconds;
+
+    @Schema(description = "Current playback offset in seconds for scheduled videos (calculated from scheduled time)", example = "180")
+    private Long currentPlaybackOffsetSeconds;
+
+    @Schema(description = "Whether the video is available (scheduled videos become available at scheduledAt time)", example = "true")
+    private Boolean isAvailable;
 }
