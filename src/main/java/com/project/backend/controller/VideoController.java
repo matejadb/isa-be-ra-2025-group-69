@@ -311,4 +311,52 @@ public class VideoController {
         boolean isLiked = likeService.isLikedByUser(id, user.getId());
         return ResponseEntity.ok(Map.of("liked", isLiked));
     }
+
+    // ====== VIEW COUNT ENDPOINTS ======
+
+    @PostMapping("/{id}/view")
+    @Operation(
+            summary = "Increment view count",
+            description = "Increment the view count for a video. Should be called when a user enters the video viewing page. Thread-safe implementation ensures correct counting even with concurrent requests."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "View count incremented successfully"),
+            @ApiResponse(responseCode = "404", description = "Video not found")
+    })
+    public ResponseEntity<?> incrementViewCount(
+            @Parameter(description = "Video ID", required = true) @PathVariable Long id
+    ) {
+        try {
+            videoService.incrementViewCount(id);
+            Integer viewCount = videoService.getViewCount(id);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "viewCount", viewCount
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/{id}/views")
+    @Operation(
+            summary = "Get view count",
+            description = "Get the current view count for a video"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "View count retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Video not found")
+    })
+    public ResponseEntity<?> getViewCount(
+            @Parameter(description = "Video ID", required = true) @PathVariable Long id
+    ) {
+        try {
+            Integer viewCount = videoService.getViewCount(id);
+            return ResponseEntity.ok(Map.of("viewCount", viewCount));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

@@ -268,5 +268,28 @@ public class VideoService {
         return response;
     }
 
+    /**
+     * Increment view count for a video
+     * Thread-safe implementation using atomic database operation
+     */
+    @Transactional
+    public void incrementViewCount(Long videoId) {
+        // Verify video exists first
+        if (!videoRepository.existsById(videoId)) {
+            throw new RuntimeException("Video not found");
+        }
+        // Atomically increment view count in database
+        videoRepository.incrementViewCount(videoId);
+    }
+
+    /**
+     * Get current view count for a video
+     */
+    public Integer getViewCount(Long videoId) {
+        Video video = videoRepository.findById(videoId)
+                .orElseThrow(() -> new RuntimeException("Video not found"));
+        return video.getViewCount();
+    }
+
 
 }
