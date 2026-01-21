@@ -6,6 +6,7 @@ import com.project.backend.dto.VideoUploadRequest;
 import com.project.backend.model.User;
 import com.project.backend.service.LikeService;
 import com.project.backend.service.VideoService;
+import com.project.backend.service.VideoViewTrackingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -15,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -43,6 +45,7 @@ public class VideoController {
 
     private final VideoService videoService;
     private final LikeService likeService;
+    private final VideoViewTrackingService videoViewTrackingService;
     private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -317,16 +320,22 @@ public class VideoController {
     @PostMapping("/{id}/view")
     @Operation(
             summary = "Increment view count",
-            description = "Increment the view count for a video. Should be called when a user enters the video viewing page. Thread-safe implementation ensures correct counting even with concurrent requests."
+            description = "Increment the view count for a video. Should be called when a user enters the video viewing page. Thread-safe implementation ensures correct counting even with concurrent requests. Also tracks detailed view information for ETL analytics."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "View count incremented successfully"),
             @ApiResponse(responseCode = "404", description = "Video not found")
     })
     public ResponseEntity<?> incrementViewCount(
-            @Parameter(description = "Video ID", required = true) @PathVariable Long id
+            @Parameter(description = "Video ID", required = true) @PathVariable Long id,
+            @AuthenticationPrincipal User user,
+            HttpServletRequest request
     ) {
         try {
+            // Track view for ETL pipeline
+            videoViewTrackingService.trackVideoView(id, user, request);
+
+            // Increment overall view count
             videoService.incrementViewCount(id);
             Integer viewCount = videoService.getViewCount(id);
             return ResponseEntity.ok(Map.of(
