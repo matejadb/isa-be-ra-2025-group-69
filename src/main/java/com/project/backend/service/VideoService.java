@@ -73,6 +73,8 @@ public class VideoService {
             video.setThumbnailPath(thumbnailPath);
             video.setFileSize(videoFile.getSize());
             video.setLocation(request.getLocation());
+            video.setLatitude(request.getLatitude());
+            video.setLongitude(request.getLongitude());
             video.setUser(user);
             video.setScheduledAt(request.getScheduledAt());
             video.setDurationInSeconds(durationInSeconds);
@@ -126,6 +128,8 @@ public class VideoService {
                 .map(Tag::getName)
                 .collect(Collectors.toList()));
         response.setLocation(video.getLocation());
+        response.setLatitude(video.getLatitude());
+        response.setLongitude(video.getLongitude());
         response.setCreatedAt(video.getCreatedAt());
         response.setUserId(video.getUser().getId());
         response.setUsername(video.getUser().getUsername());

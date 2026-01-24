@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.engine.internal.ImmutableEntityEntry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
+@ToString(exclude = {"videos", "likes", "address"}) // Exclude lazy-loaded collections from toString()
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

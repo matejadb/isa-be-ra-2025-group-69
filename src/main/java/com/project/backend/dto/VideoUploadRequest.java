@@ -25,6 +25,12 @@ public class VideoUploadRequest {
     @Schema(description = "Geographic location (optional)", example = "Belgrade, Serbia")
     private String location;
 
+    @Schema(description = "Latitude coordinate (optional, required for local trending)", example = "44.7866")
+    private Double latitude;
+
+    @Schema(description = "Longitude coordinate (optional, required for local trending)", example = "20.4489")
+    private Double longitude;
+
     @Schema(description = "Scheduled release date/time (optional). If set, video will only be available at this time.", example = "2026-01-20T08:00:00")
     private LocalDateTime scheduledAt;
 }
