@@ -25,6 +25,7 @@ public class LocalTrendingService {
     private final VideoRepository videoRepository;
     private final VideoViewRepository videoViewRepository;
     private final VideoService videoService;
+    private final SpatialSearchService spatialSearchService;
 
     // Scoring weights (total = 100)
     private static final double VIEWS_WEIGHT = 40.0;      // 40% weight
@@ -81,7 +82,7 @@ public class LocalTrendingService {
                     List<VideoView> videoViews = viewsByVideo.getOrDefault(video.getId(), Collections.emptyList());
 
                     // Calculate distance from user location
-                    double distance = calculateDistance(
+                    double distance = spatialSearchService.calculateDistance(
                             request.getLatitude(),
                             request.getLongitude(),
                             video.getLatitude(),
@@ -142,50 +143,22 @@ public class LocalTrendingService {
     }
 
     /**
-     * Find all videos within a specified radius using the Haversine formula
+     * Find all videos within a specified radius using optimal spatial search
+     * Uses SpatialSearchService which automatically chooses:
+     * - PostGIS with spatial index (if enabled) - O(log n)
+     * - Haversine formula (fallback) - O(n)
      */
     private List<Video> findVideosInRadius(Double userLat, Double userLon, Double radiusKm) {
         log.debug("Finding videos in radius: lat={}, lon={}, radius={}km", userLat, userLon, radiusKm);
 
-        // Get all videos with eager-loaded relationships to prevent LazyInitializationException
-        List<Video> allVideos = videoRepository.findAllWithRelations();
-
-        log.debug("Total videos in database: {}", allVideos.size());
-
-        List<Video> videosInRadius = allVideos.stream()
-                .filter(video -> video.getLatitude() != null && video.getLongitude() != null)
-                .filter(video -> {
-                    double distance = calculateDistance(
-                            userLat, userLon,
-                            video.getLatitude(), video.getLongitude()
-                    );
-                    return distance <= radiusKm;
-                })
-                .collect(Collectors.toList());
+        // Use SpatialSearchService for optimal spatial query
+        List<Video> videosInRadius = spatialSearchService.findVideosWithinRadius(userLat, userLon, radiusKm);
 
         log.debug("Videos with coordinates in radius: {}", videosInRadius.size());
 
         return videosInRadius;
     }
 
-    /**
-     * Calculate distance between two coordinates using Haversine formula
-     * Returns distance in kilometers
-     */
-    private double calculateDistance(Double lat1, Double lon1, Double lat2, Double lon2) {
-        final int EARTH_RADIUS_KM = 6371;
-
-        double latDistance = Math.toRadians(lat2 - lat1);
-        double lonDistance = Math.toRadians(lon2 - lon1);
-
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return EARTH_RADIUS_KM * c;
-    }
 
     /**
      * Calculate detailed popularity metrics for a video
