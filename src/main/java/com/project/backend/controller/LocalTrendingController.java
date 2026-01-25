@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/trending/local")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:8081"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 @Tag(name = "Local Trending", description = "Location-based trending videos with multi-parameter popularity scoring")
 @Slf4j
 public class LocalTrendingController {

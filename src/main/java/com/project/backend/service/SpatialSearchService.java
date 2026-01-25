@@ -53,18 +53,18 @@ public class SpatialSearchService {
 
         String sql = """
             SELECT v.* FROM videos v
-            WHERE v.latitude IS NOT NULL 
+            WHERE v.latitude IS NOT NULL
             AND v.longitude IS NOT NULL
             AND ST_DWithin(
-                ST_MakePoint(v.longitude, v.latitude)::geography,
-                ST_MakePoint(:longitude, :latitude)::geography,
+                CAST(ST_MakePoint(v.longitude, v.latitude) AS geography),
+                CAST(ST_MakePoint(:longitude, :latitude) AS geography),
                 :radiusMeters
             )
             ORDER BY ST_Distance(
-                ST_MakePoint(v.longitude, v.latitude)::geography,
-                ST_MakePoint(:longitude, :latitude)::geography
+                CAST(ST_MakePoint(v.longitude, v.latitude) AS geography),
+                CAST(ST_MakePoint(:longitude, :latitude) AS geography)
             )
-            """;
+        """;
 
         Query query = entityManager.createNativeQuery(sql, Video.class);
         query.setParameter("latitude", lat);
