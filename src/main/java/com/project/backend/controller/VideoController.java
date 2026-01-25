@@ -39,7 +39,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/videos")
 @RequiredArgsConstructor
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175", "http://localhost:5176", "http://localhost:8081"})
 @Tag(name = "Video", description = "Video management endpoints - upload, view, stream, and like videos")
 public class VideoController {
 

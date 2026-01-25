@@ -34,6 +34,12 @@ public class VideoResponse {
     @Schema(description = "Geographic location (optional)", example = "Belgrade, Serbia")
     private String location;
 
+    @Schema(description = "Latitude coordinate", example = "44.7866")
+    private Double latitude;
+
+    @Schema(description = "Longitude coordinate", example = "20.4489")
+    private Double longitude;
+
     @Schema(description = "Video creation timestamp", example = "2025-01-06T15:30:00")
     private LocalDateTime createdAt;
 
