@@ -171,23 +171,18 @@ public class LocalTrendingService {
     ) {
         LocalTrendingVideoDTO.PopularityMetrics metrics = new LocalTrendingVideoDTO.PopularityMetrics();
 
-        // Total views in the time window
         int totalViews = recentViews.size();
         metrics.setTotalViews(totalViews);
 
-        // Total likes
         int totalLikes = video.getLikeCount();
         metrics.setTotalLikes(totalLikes);
 
-        // Engagement rate: (likes / views) * 100
         double engagementRate = totalViews > 0 ? (totalLikes * 100.0 / totalViews) : 0.0;
         metrics.setEngagementRate(engagementRate);
 
-        // Video age in days
         long ageInDays = ChronoUnit.DAYS.between(video.getCreatedAt(), now);
         metrics.setAgeInDays(ageInDays);
 
-        // Calculate individual scores (0-max for each category)
 
         // 1. View Score (0-40): Weighted views based on recency
         double viewScore = calculateViewScore(recentViews, now, days);
@@ -221,18 +216,12 @@ public class LocalTrendingService {
         for (VideoView view : views) {
             long daysAgo = ChronoUnit.DAYS.between(view.getViewedAt().toLocalDate(), now.toLocalDate());
 
-            // Weight: higher for more recent views
-            // Day 0 (today) = weight 1.0
-            // Day 1 (yesterday) = weight 0.9
-            // Day 2 = weight 0.8, etc.
             double weight = 1.0 - (daysAgo * 0.1);
-            if (weight < 0.1) weight = 0.1; // Minimum weight
+            if (weight < 0.1) weight = 0.1; 
 
             weightedViews += weight;
         }
 
-        // Normalize to 0-40 scale using logarithmic function
-        // log(1 + weightedViews) to prevent very high values
         double normalizedScore = Math.log10(1 + weightedViews) * 10;
         return Math.min(normalizedScore, VIEWS_WEIGHT);
     }
@@ -245,7 +234,6 @@ public class LocalTrendingService {
             return 0.0;
         }
 
-        // Use logarithmic scaling: log10(1 + likes) * scale_factor
         double normalizedScore = Math.log10(1 + likes) * 10;
         return Math.min(normalizedScore, LIKES_WEIGHT);
     }
@@ -254,9 +242,6 @@ public class LocalTrendingService {
      * Calculate engagement score (0-20)
      */
     private double calculateEngagementScore(double engagementRate) {
-        // Engagement rate is already a percentage
-        // Cap at 20% for full score (20/20)
-        // Higher engagement rates are extremely good, so we cap generously
         return Math.min(engagementRate, ENGAGEMENT_WEIGHT);
     }
 
@@ -264,12 +249,10 @@ public class LocalTrendingService {
      * Calculate recency score - newer videos get higher scores (0-10)
      */
     private double calculateRecencyScore(long ageInDays) {
-        // Videos less than 1 day old get full score
         if (ageInDays < 1) {
             return RECENCY_WEIGHT;
         }
 
-        // Decay factor: lose 1 point per day, minimum 0
         double score = RECENCY_WEIGHT - ageInDays;
         return Math.max(score, 0.0);
     }
