@@ -144,9 +144,6 @@ public class LocalTrendingService {
 
     /**
      * Find all videos within a specified radius using optimal spatial search
-     * Uses SpatialSearchService which automatically chooses:
-     * - PostGIS with spatial index (if enabled) - O(log n)
-     * - Haversine formula (fallback) - O(n)
      */
     private List<Video> findVideosInRadius(Double userLat, Double userLon, Double radiusKm) {
         log.debug("Finding videos in radius: lat={}, lon={}, radius={}km", userLat, userLon, radiusKm);
